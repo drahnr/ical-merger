@@ -15,9 +15,18 @@ async fn rocket() -> _ {
     // load Arc<RwLock<ApplicationConfig>> from config.json
     let config = read_config_file().unwrap();
     let config = Arc::new(RwLock::new(config));
+    
     let cache: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
     tokio::spawn(worker_thread(config.clone(), cache.clone(), Client::new()));
-    rocket::build()
+
+    let cfg = Config::build(Environment::Production)
+        .port(port)
+        .workers(2)
+        .log_level(LoggingLevel::Debug)
+        .finalize()
+        .expect("Failed to create rocket config");
+
+    rocket::custom(cfg)
         .mount("/", routes![calendar])
         .manage(cache)
         .manage(config)

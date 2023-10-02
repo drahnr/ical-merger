@@ -33,10 +33,10 @@ An example config file can be found in the repository [`./example.config.yaml`](
 You can see one way to more comfortably generate configuration files by looking at [`./generate_config_example.py`](./generate_config_example.py).
 
 You can configure the web server [`rocket`](https://rocket.rs/) as documented in its [`config`](https://rocket.rs/v0.5-rc/guide/configuration/) section.
-Most notably, the port can be set with `ROCKET_PORT=<PORT>` as an environment variable with a default of `8000`.
+Most notably, the port can be set with `PORT=<PORT>` as an environment variable with a default of `8000`.
 
 ```bash
-ROCKET_PORT=8000 ical-merger
+PORT=8000 ical-merger
 ```
 
 By default, we pull in the latest versions of all calenders every minute. This is currently hard-coded in the program.
