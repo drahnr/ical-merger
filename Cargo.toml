@@ -15,7 +15,11 @@ categories = ["text-processing", "web-programming::http-server"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11.11", features = ["json", "blocking", "rustls-tls"], default-features = false }
+reqwest = { version = "0.11.11", features = [
+  "json",
+  "blocking",
+  "rustls-tls",
+], default-features = false }
 tokio = { version = "1.20.4", features = ["full"] }
 rocket = "0.5.0-rc.3"
 serde = "1.0.139"
@@ -26,6 +30,7 @@ eyre = "0.6.8"
 serde_yaml = "0.9.25"
 serde_with = "1.14.0"
 dashmap = "5.3.4"
+log = "0.4.20"
 
 [package.metadata.release]
 pre-release-hook = ["./pre-release.sh"]

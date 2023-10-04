@@ -590,6 +590,7 @@ dependencies = [
  "dashmap",
  "elikoga-ical-rs",
  "eyre",
+ "log",
  "reqwest",
  "rocket",
  "serde",

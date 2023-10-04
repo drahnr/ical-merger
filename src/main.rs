@@ -8,21 +8,22 @@ use ical_merger::{
     calendars::Calendar,
     config::{read_config_file, ApplicationConfig},
 };
-use rocket::{get, http::ContentType, response::Responder, routes, State};
+use rocket::{get, http::ContentType, response::Responder, routes, Config, State};
 
 #[rocket::launch]
 async fn rocket() -> _ {
     // load Arc<RwLock<ApplicationConfig>> from config.json
     let config = read_config_file().unwrap();
     let config = Arc::new(RwLock::new(config));
-    
+
     let cache: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
     tokio::spawn(worker_thread(config.clone(), cache.clone(), Client::new()));
 
-    let cfg = Config::build(Environment::Production)
+    let port = 8080;
+    let cfg = Config::RELEASE_PROFILE()
         .port(port)
         .workers(2)
-        .log_level(LoggingLevel::Debug)
+        .log_level(log::LoggingLevel::Debug)
         .finalize()
         .expect("Failed to create rocket config");
 
