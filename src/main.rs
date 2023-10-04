@@ -11,7 +11,7 @@ use ical_merger::{
 use rocket::{get, http::ContentType, log::LogLevel, response::Responder, routes, Config, State};
 
 #[derive(clap::Parser, Debug, Clone)]
-#[command(author, about, long_about = None)]
+#[command(author, version, about, long_about = None)]
 struct Args {
     #[command(flatten)]
     verbose: clap_verbosity_flag::Verbosity,
