@@ -8,7 +8,7 @@ use ical_merger::{
     calendars::Calendar,
     config::{read_config_file, ApplicationConfig},
 };
-use rocket::{get, http::ContentType, response::Responder, routes, Config, State};
+use rocket::{get, http::ContentType, log::LogLevel, response::Responder, routes, Config, State};
 
 #[rocket::launch]
 async fn rocket() -> _ {
@@ -19,13 +19,12 @@ async fn rocket() -> _ {
     let cache: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
     tokio::spawn(worker_thread(config.clone(), cache.clone(), Client::new()));
 
-    let port = 8080;
-    let cfg = Config::RELEASE_PROFILE()
-        .port(port)
-        .workers(2)
-        .log_level(log::LoggingLevel::Debug)
-        .finalize()
-        .expect("Failed to create rocket config");
+    let port = 8080_u16;
+    let mut cfg = Config::default();
+    cfg.profile = Config::RELEASE_PROFILE;
+    cfg.port = port;
+    cfg.log_level = LogLevel::Debug;
+    cfg.workers = 2;
 
     rocket::custom(cfg)
         .mount("/", routes![calendar])
