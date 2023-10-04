@@ -1,8 +1,5 @@
 /target
-src/do_calendar.rs
+/deployment/**
 config.json
 config.yaml
-examples/print_personal_config.rs
-__pycache__
-.mypy_cache
-generate_config.py
+**.py
