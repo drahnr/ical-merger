@@ -10,8 +10,20 @@ use ical_merger::{
 };
 use rocket::{get, http::ContentType, log::LogLevel, response::Responder, routes, Config, State};
 
+#[derive(clap::Parser, Debug, Clone)]
+#[command(author, about, long_about = None)]
+struct Args {
+    #[command(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
+
+    #[arg(short, long, default_value_t = 8080, env = "PORT")]
+    port: u16,
+}
+
 #[rocket::launch]
 async fn rocket() -> _ {
+    let args = <Args as clap::Parser>::parse();
+
     // load Arc<RwLock<ApplicationConfig>> from config.json
     let config = read_config_file().unwrap();
     let config = Arc::new(RwLock::new(config));
@@ -19,10 +31,9 @@ async fn rocket() -> _ {
     let cache: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
     tokio::spawn(worker_thread(config.clone(), cache.clone(), Client::new()));
 
-    let port = 8080_u16;
     let mut cfg = Config::default();
     cfg.profile = Config::RELEASE_PROFILE;
-    cfg.port = port;
+    cfg.port = args.port;
     cfg.log_level = LogLevel::Debug;
     cfg.workers = 2;
 
