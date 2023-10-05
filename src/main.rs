@@ -1,7 +1,7 @@
 use dashmap::DashMap;
 use eyre::{eyre, Context, Result};
 use reqwest::Client;
-use std::{path::PathBuf, sync::Arc};
+use std::{net::IpAddr, path::PathBuf, str::FromStr, sync::Arc};
 use tokio::sync::RwLock;
 
 use ical_merger::{
@@ -20,6 +20,10 @@ struct Args {
     sub: Command,
 }
 
+fn quad0() -> IpAddr {
+    IpAddr::from_str("0.0.0.0").unwrap()
+}
+
 #[derive(clap::Subcommand, Debug, Clone, PartialEq, Eq)]
 enum Command {
     Check {
@@ -30,22 +34,32 @@ enum Command {
     Serve {
         #[arg(short, long, default_value_t = 8080, env = "PORT")]
         port: u16,
+
+        #[arg(short, long, default_value_t = quad0(), env = "ADDRESS")]
+        listen: IpAddr,
     },
 }
 
 fn main() -> Result<()> {
     let args = <Args as clap::Parser>::parse();
+    pretty_env_logger::formatted_timed_builder()
+        .filter_level(args.verbose.log_level_filter())
+        .init();
+
     let config = read_config_file()?;
-    let port = match args.sub {
+    let (listen, port) = match args.sub {
         Command::Check { .. } => return Ok(()),
-        Command::Serve { port } => port,
+        Command::Serve {
+            port,
+            listen: listen,
+        } => (listen, port),
     };
     let rt = tokio::runtime::Runtime::new()?;
-    rt.block_on(rocket(config, port))?;
+    rt.block_on(rocket(config, listen, port))?;
     Ok(())
 }
 
-async fn rocket(config: ApplicationConfig, port: u16) -> Result<()> {
+async fn rocket(config: ApplicationConfig, listen: IpAddr, port: u16) -> Result<()> {
     let config = Arc::new(RwLock::new(config));
 
     let cache: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
@@ -56,6 +70,7 @@ async fn rocket(config: ApplicationConfig, port: u16) -> Result<()> {
     cfg.port = port;
     cfg.log_level = LogLevel::Debug;
     cfg.workers = 2;
+    cfg.address = listen;
 
     rocket::custom(cfg)
         .mount("/", routes![calendar])

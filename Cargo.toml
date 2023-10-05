@@ -27,12 +27,13 @@ serde_json = "1.0.82"
 async-recursion = "1.0.0"
 elikoga-ical-rs = "0.2.4"
 eyre = "0.6.8"
-serde_yaml = "0.9.25"
+serde_yaml = "0.9"
 serde_with = "1.14.0"
 dashmap = "5.3.4"
 log = "0.4.20"
 clap = { version = "4.4.6", features = ["derive", "env"] }
 clap-verbosity-flag = "2.0.1"
+pretty_env_logger = "0.5.0"
 
 [package.metadata.release]
 pre-release-hook = ["./pre-release.sh"]

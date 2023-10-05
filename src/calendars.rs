@@ -25,7 +25,7 @@ impl Display for Calendar {
 
 impl Calendar {
     async fn fetch_calendar(client: Client, url: String) -> Result<Self> {
-        println!("Fetching calendar from {}", url);
+        log::debug!("Fetching calendar from {}", url);
         let response = client.get(url).send().await?;
         let body = response.bytes().await?;
         let calendar = ICalObject::from_bufread(&mut Cursor::new(body))?;
@@ -57,14 +57,16 @@ impl Calendar {
             new_calendars.push(calendar);
         }
         // merge by mergin properties, components
-        let properties = new_calendars
-            .iter()
-            .flat_map(|calendar| calendar.0.properties.clone())
-            .collect::<Vec<_>>();
-        let sub_objects = new_calendars
-            .iter()
-            .flat_map(|calendar| calendar.0.sub_objects.clone())
-            .collect::<Vec<_>>();
+        let properties = Vec::from_iter(
+            new_calendars
+                .iter()
+                .flat_map(|calendar| calendar.0.properties.clone()),
+        );
+        let sub_objects = Vec::from_iter(
+            new_calendars
+                .iter()
+                .flat_map(|calendar| calendar.0.sub_objects.clone()),
+        );
         let calendar = Calendar(ICalObject {
             object_type: "VCALENDAR".to_string(),
             properties,
