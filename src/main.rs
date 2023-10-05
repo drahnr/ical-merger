@@ -16,16 +16,36 @@ struct Args {
     #[command(flatten)]
     verbose: clap_verbosity_flag::Verbosity,
 
-    #[arg(short, long, default_value_t = 8080, env = "PORT")]
-    port: u16,
+    #[command(subcommand)]
+    sub: Command,
 }
 
-#[rocket::launch]
-async fn rocket() -> _ {
-    let args = <Args as clap::Parser>::parse();
+#[derive(clap::Subcommand, Debug, Clone, PartialEq, Eq)]
+enum Command {
+    Check {
+        #[arg(short, long)]
+        path: Option<PathBuf>,
+    },
 
-    // load Arc<RwLock<ApplicationConfig>> from config.json
-    let config = read_config_file().unwrap();
+    Serve {
+        #[arg(short, long, default_value_t = 8080, env = "PORT")]
+        port: u16,
+    },
+}
+
+fn main() -> Result<()> {
+    let args = <Args as clap::Parser>::parse();
+    let config = read_config_file()?;
+    let port = match args.sub {
+        Command::Check { .. } => return Ok(()),
+        Command::Serve { port } => port,
+    };
+    let rt = tokio::runtime::Runtime::new()?;
+    rt.block_on(rocket(config, port))?;
+    Ok(())
+}
+
+async fn rocket(config: ApplicationConfig, port: u16) -> Result<()> {
     let config = Arc::new(RwLock::new(config));
 
     let cache: Arc<DashMap<String, String>> = Arc::new(DashMap::new());
@@ -33,7 +53,7 @@ async fn rocket() -> _ {
 
     let mut cfg = Config::default();
     cfg.profile = Config::RELEASE_PROFILE;
-    cfg.port = args.port;
+    cfg.port = port;
     cfg.log_level = LogLevel::Debug;
     cfg.workers = 2;
 
@@ -41,6 +61,9 @@ async fn rocket() -> _ {
         .mount("/", routes![calendar])
         .manage(cache)
         .manage(config)
+        .launch()
+        .await?;
+    Ok(())
 }
 
 async fn worker_thread(
